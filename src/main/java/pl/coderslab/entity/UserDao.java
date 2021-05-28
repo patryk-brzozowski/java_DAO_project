@@ -12,8 +12,9 @@ import java.util.Arrays;
 
 public class UserDao {
     private static final String CREATE_USER_QUERY = "INSERT INTO users VALUES (null, ?, ?, ?)";
-    private static final String UPDATE_USER_QUERY = "UPDATE users SET email=?, username=?, password=? WHERE id =?";
-    private static final String PRINT_USER_QUERY = "SELECT * FROM users WHERE id = ?";
+    private static final String UPDATE_USER_QUERY = "UPDATE users SET email=?, username=? WHERE id =?";
+    private static final String UPDATE_PASSWORD_USER_QUERY = "UPDATE users SET password=? WHERE id =?";
+    private static final String READ_USER_QUERY = "SELECT * FROM users WHERE id = ?";
     private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE id = ?";
     private static final String READ_ALL_QUERY = "SELECT * FROM users";
     private static final String DELETE_ALL_QUERY = "DELETE FROM users";
@@ -28,6 +29,7 @@ public class UserDao {
                 System.out.println("Wpis został utworzony");
             } else {
                 System.out.println("Wystąpił problem");
+                return null;
             }
             ResultSet res = stm.getGeneratedKeys();
             if (res.next()) {
@@ -41,13 +43,13 @@ public class UserDao {
         }
     }
 
-    public String hashPassword(String password) {
+    private String hashPassword(String password) {
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
     public User read (int userID) {
         try (Connection conn = DbUtil.connect()) {
-            PreparedStatement stm = conn.prepareStatement(PRINT_USER_QUERY);
+            PreparedStatement stm = conn.prepareStatement(READ_USER_QUERY);
             stm.setInt(1, userID);
             ResultSet res = stm.executeQuery();
             User user = new User();
@@ -69,13 +71,28 @@ public class UserDao {
         }
     }
 
-    public void Update (User user) {
+    public void update (User user) {
         try (Connection conn = DbUtil.connect()) {
             PreparedStatement stm = conn.prepareStatement(UPDATE_USER_QUERY);
             stm.setString(1, user.getEmail());
             stm.setString(2, user.getUserName());
-            stm.setString(3, hashPassword(user.getPassword()));
-            stm.setInt(4, user.getId());
+            stm.setInt(3, user.getId());
+            if (stm.executeUpdate() == 1) {
+                System.out.println("Wiersz został zmodyfikowany");
+            } else {
+                System.out.println("Wystąpił błąd przy próbie modyfikacji wiersza");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            System.out.println("Modyfikacja wiersza zakończona niepowodzeniem");
+        }
+    }
+
+    public void updatePassword (User user, String password) {
+        try (Connection conn = DbUtil.connect()) {
+            PreparedStatement stm = conn.prepareStatement(UPDATE_PASSWORD_USER_QUERY);
+            stm.setString(1, hashPassword(password));
+            stm.setInt(2, user.getId());
             if (stm.executeUpdate() == 1) {
                 System.out.println("Wiersz został zmodyfikowany");
             } else {
@@ -115,9 +132,6 @@ public class UserDao {
                 user.setPassword(res.getString("password"));
                 usersArray = addToArray(user, usersArray);
             }
-            if (usersArray.length == 0) {
-                return null;
-            }
             return usersArray;
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -135,6 +149,7 @@ public class UserDao {
     public void deleteAll() {
         try (Connection conn = DbUtil.connect()) {
             PreparedStatement stm = conn.prepareStatement(DELETE_ALL_QUERY);
+            stm.executeUpdate();
             System.out.println("Tabela została wyczyszczona");
         } catch (SQLException ex) {
             ex.printStackTrace();

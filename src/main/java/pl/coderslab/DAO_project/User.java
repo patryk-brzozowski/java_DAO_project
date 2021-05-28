@@ -2,9 +2,18 @@ package pl.coderslab.DAO_project;
 
 public class User {
     private int id;
-    private String userName;
     private String email;
+    private String userName;
     private String password;
+
+    public User() {
+    }
+
+    public User (String email, String userName, String password) {
+        this.email = email;
+        this.userName = userName;
+        this.password = password;
+    }
 
     public int getId() {
         return id;
@@ -36,5 +45,9 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String toString() {
+        return String.format("ID: %s, email: %s, username: %s, password: %s", id, email, userName, password);
     }
 }
