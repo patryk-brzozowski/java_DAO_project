@@ -8,10 +8,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class UserDao {
     private static final String CREATE_USER_QUERY = "INSERT INTO users VALUES (null, ?, ?, ?)";
-    private static final String UPDATE_USER_QUERY = "UPDATE users SET username=?, email=?, password=?";
+    private static final String UPDATE_USER_QUERY = "UPDATE users SET email=?, username=?, password=? WHERE id =?";
     private static final String PRINT_USER_QUERY = "SELECT * FROM users WHERE id = ?";
     private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE id = ?";
     private static final String READ_ALL_QUERY = "SELECT * FROM users";
@@ -68,6 +69,24 @@ public class UserDao {
         }
     }
 
+    public void Update (User user) {
+        try (Connection conn = DbUtil.connect()) {
+            PreparedStatement stm = conn.prepareStatement(UPDATE_USER_QUERY);
+            stm.setString(1, user.getEmail());
+            stm.setString(2, user.getUserName());
+            stm.setString(3, hashPassword(user.getPassword()));
+            stm.setInt(4, user.getId());
+            if (stm.executeUpdate() == 1) {
+                System.out.println("Wiersz został zmodyfikowany");
+            } else {
+                System.out.println("Wystąpił błąd przy próbie modyfikacji wiersza");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            System.out.println("Modyfikacja wiersza zakończona niepowodzeniem");
+        }
+    }
+
     public void delete(int userId) {
         try (Connection conn = DbUtil.connect()) {
             PreparedStatement stm = conn.prepareStatement(DELETE_USER_QUERY);
@@ -81,6 +100,36 @@ public class UserDao {
             ex.printStackTrace();
             System.out.println("Próba usunięcia użytkownika zakończona niepowodzeniem");
         }
+    }
+
+    public User[] findAll() {
+        User[] usersArray = new User[0];
+        try (Connection conn = DbUtil.connect()) {
+            PreparedStatement stm = conn.prepareStatement(READ_ALL_QUERY);
+            ResultSet res = stm.executeQuery();
+            while (res.next()) {
+                User user = new User();
+                user.setId(res.getInt("id"));
+                user.setEmail(res.getString("email"));
+                user.setUserName(res.getString("username"));
+                user.setPassword(res.getString("password"));
+                usersArray = addToArray(user, usersArray);
+            }
+            if (usersArray.length == 0) {
+                return null;
+            }
+            return usersArray;
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            System.out.println("Próba odczytania danych zakończona niepowodzeniem");
+            return null;
+        }
+    }
+
+    private User[] addToArray(User u, User[] users) {
+        users = Arrays.copyOf(users, users.length+1);
+        users[users.length-1] = u;
+        return users;
     }
 
     public void deleteAll() {

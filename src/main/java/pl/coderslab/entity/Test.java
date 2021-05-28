@@ -13,10 +13,17 @@ public class Test {
 //        user = usDao.create(user);
 //        System.out.println(user.getId());
 //
-//        User user1 = usDao.read(user.getId());
-//        System.out.println(user1.getId() + " " + user1.getUserName() + " " + user1.getEmail() + " " + user1.getPassword());
+        User[] users = usDao.findAll();
+        for (User user: users) {
+            System.out.println(user.getId() + " " + user.getUserName() + " "
+                    + user.getEmail() + " " + user.getPassword());
+        }
 //
 //        System.out.println(usDao.read(2));
 //        usDao.delete(7);
+//        user1.setUserName("Krystian0003");
+//        user1.setEmail("krystianx@wp.pl");
+//        user1.setPassword("admin");
+//        usDao.Update(user1);
     }
 }
